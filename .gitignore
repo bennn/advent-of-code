@@ -1,0 +1,7 @@
+compiled/
+*.swo
+*.swp
+*.swn
+*~
+\.\#*
+\#*
