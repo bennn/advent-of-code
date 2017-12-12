@@ -4,8 +4,8 @@
   (require racket/cmdline)
   (command-line
     #:program "aoc-new"
-    #:args (NUM)
-    (begin
+    #:args (pre-NUM)
+    (let ([NUM (if (= 1 (string-length pre-NUM)) (string-append "0" pre-NUM) pre-NUM)])
       (unless (directory-exists? NUM)
         (make-directory NUM)
         (with-output-to-file (path-add-extension (build-path NUM NUM) ".rkt")
