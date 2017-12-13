@@ -22,9 +22,8 @@
   (define N (- (hash-ref hist "n" 0) (hash-ref hist "s" 0)))
   (define NE (- (hash-ref hist "ne" 0) (hash-ref hist "sw" 0)))
   (define NW (- (hash-ref hist "nw" 0) (hash-ref hist "se" 0)))
-  (define SE (- (hash-ref hist "se" 0) (hash-ref hist "nw" 0)))
   ;; ---
-  (define x (/ (+ NE SE) 2))
+  (define x (/ (- NE NW) 2))
   (define y (+ N (/ (+ NE NW) 2)))
   (abs (+ y x)))
 
