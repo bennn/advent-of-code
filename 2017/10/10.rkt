@@ -1,5 +1,7 @@
 #lang racket
 
+(provide knot-hash)
+
 (define TAIL '(17 31 73 47 23))
 
 (define (string->ascii str)
