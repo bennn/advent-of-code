@@ -1,12 +1,14 @@
 #lang racket
 
+;; TODO this program is correct, but very slow
+
+(define BIL 10 #;00000000)
+
 (define PROG
   '(a b c d e f g h i j k l m n o p))
 
 (define (init)
   (list->vector PROG))
-;  (for/hash ((k (in-list)) (v (in-naturals)))
-;    (values k v)))
 
 (define (do-spin H x)
   ;; x programs from end to front
@@ -26,7 +28,8 @@
 (define (do-partner H a b)
   (define i (findi H a))
   (define j (findi H b))
-  (do-exchange H i j))
+  (vector-set! H i b)
+  (vector-set! H j a))
 
 (define (spin? cmd)
   (and (< 0 (string-length cmd)) (equal? #\s (string-ref cmd 0))))
@@ -56,13 +59,21 @@
   (for/first ((i (in-naturals)) (v (in-vector H)) #:when (eq? v p))
     i))
 
-(define BIL 1000000000)
-
 (define (go input)
   (define H (init))
-  (define str (string-trim (file->string input)))
-  (for ((i (in-range BIL)))
-    (for ((cmd (in-list (string-split str ","))))
+  (define cmd* (string-split (string-trim (file->string input)) ","))
+  (void
+    (run! H cmd* 1))
+  (define part1 (print-order H))
+  (void
+    (run! H cmd* (- BIL 1)))
+  (define part2 (print-order H))
+  (printf "part 1 : ~a~npart 2 : ~a~n" part1 part2)
+  (void))
+
+(define (run! H cmd* N)
+  (for ((i (in-range N)))
+    (for ((cmd (in-list cmd*)))
       (cond
        [(spin? cmd)
         (apply do-spin H (parse-spin cmd))]
