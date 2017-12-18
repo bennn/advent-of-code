@@ -9,7 +9,6 @@
 
 (define H0 (make-program 0))
 (define H1 (make-program 1))
-;(define LOCK (make-semaphore 1))
 
 ;(define part1 (box #f))
 ;(define LAST-SOUND (box #f))
@@ -59,7 +58,6 @@
    ((list "mul" x y)
     (hupdate! H x (lambda (old) (* old (eval2 y)))))
    ((list "mod" x y)
-    #;(printf "mod ~a ~a ~a~n" x y H)
     (hupdate! H x (lambda (old) (modulo old (eval2 y)))))
    ((list "rcv" x)
     (unless (zero? (eval2 x))
@@ -70,16 +68,11 @@
    (_ (void))))
 
 (define (send-val dst v)
-  ;(semaphore-wait LOCK)
   (define-values [H me] (if (= dst 0) (values H0 H1) (values H1 H0)))
   (define rcv (program-q H))
   (set-box! rcv (cons v (unbox rcv)))
   (define ns (program-num-sends me))
   (set-box! ns (+ (unbox ns) 1))
-  #;(if (= dst 0)
-    (printf "program 1 sends ~a~n" (unbox ns))
-    (printf "program 0 sends ~a~n" (unbox ns)))
-  ;(semaphore-post LOCK)
   (void))
 
 (define (recv-val dst)
@@ -90,13 +83,6 @@
   (if (null? v)
     'blocked
     (begin0 (last v) (set-box! q (drop-right v 1)))))
-
-(define-syntax-rule (with-LOCK e ...)
-  (begin e ...))
-;(semaphore-wait LOCK)
-;         (let ((r (begin e ...)))
-;           (semaphore-post LOCK)
-;           r)))
 
 (define (interp2 H dst str)
   (define ss (string-split str))
@@ -132,19 +118,19 @@
    (_ (error 'badinstr) )))
 
 (define (ref H k)
-  (with-LOCK (hash-ref (program-H H) k 0)))
+  (hash-ref (program-H H) k 0))
 
 (define (hset! H k v)
-  (with-LOCK (hash-set! (program-H H) k v)))
+  (hash-set! (program-H H) k v))
 
 (define (hupdate! H k v)
-  (with-LOCK (hash-update! (program-H H) k v 0)))
+  (hash-update! (program-H H) k v 0))
 
 (define (go input)
   (define V (list->vector (map string-trim (file->lines input))))
   (define LEN (vector-length V))
   (define (make-do-eval H)
-    (define dst (with-LOCK (modulo (+ 1 (hash-ref (program-H H) "p")) 2)))
+    (define dst (modulo (+ 1 (hash-ref (program-H H) "p")) 2))
     (define i (box 0))
     (lambda ()
       (if (or (< (unbox i) 0) (<= LEN (unbox i)))
@@ -179,14 +165,7 @@
       (set! P0 'ok)
       (loop)]
      [else
-      (printf "DONE ~a ~a~n" P0 P1)
       (void)]))
-  ;(define t1 (thread (make-do-eval H1)))
-  ;(define t0 (thread (make-do-eval H0)))
-  ;(thread-wait t0)
-  ;(thread-wait t1)
-  #;(printf "state 0 ~a~n" H0)
-  #;(printf "state 1 ~a~n" H1)
   (printf "send 0 : ~a~n" (unbox (program-num-sends H0)))
   (printf "send 1 : ~a~n" (unbox (program-num-sends H1)))
   (void))
