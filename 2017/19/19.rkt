@@ -23,7 +23,7 @@
   (define old '())
   (define NUM-ROWS (vector-length M))
   (define NUM-COLS (vector-length (vector-ref M 0)))
-  (define (vector-ref2 M pos)
+  (define (vector-ref2 pos)
     (define a (car pos))
     (define b (cdr pos))
     (and (<= 0 a (- NUM-COLS 1))
@@ -33,8 +33,7 @@
     (for/first ((other (in-list (pos++ pos)))
                 (new-dir (in-list '(S N E W)))
                 #:when (and (not (equal? other prev))
-                            (let ((cc (vector-ref2 M other)))
-                              #;(printf "FUCK ~a~n" (list cc pos other new-dir))
+                            (let ((cc (vector-ref2 other)))
                               (and cc (not (eq? #\space cc))))))
       (list other new-dir)))
   (define num-steps 0)
@@ -44,33 +43,29 @@
     (set! old (cons (cons c pos) old)))
   (define (init-pos!)
     (let loop ((pos (cons 0 0)))
-      (if (eq? (vector-ref2 M pos) #\|)
+      (if (eq? (vector-ref2 pos) #\|)
         pos
         (loop (+D pos 'E)))))
   (let loop ((pos (init-pos!)) (dir 'S))
-    (define c (vector-ref2 M pos))
-    #;(printf "pos ~a c ~a~n" pos c)
+    (num-steps++)
+    (define c (vector-ref2 pos))
     (cond
      [(eq? #f c)
       (void)]
      [(or (eq? c #\|) (eq? c #\-))
-      #;(assert-dir dir '(N S))
-      (num-steps++)
       (loop (+D pos dir) dir)]
      [(or (eq? c #\+) (memq c ALPHA))
       (when (memq c ALPHA)
         (save-pos! c pos))
       (define nxt (+D pos dir))
-      (define c2 (vector-ref2 M nxt))
+      (define c2 (vector-ref2 nxt))
       (if (or (eq? #f c2) (eq? #\space c2))
         (let ()
           (define new-stuff (change-dir pos (-D pos dir)))
           (if new-stuff
-            (begin (num-steps++)
-              (loop (car new-stuff) (cadr new-stuff)))
+            (loop (car new-stuff) (cadr new-stuff))
             (void)))
-        (begin (num-steps++)
-        (loop nxt dir)))]
+        (loop nxt dir))]
      [else
       (error 'badchar "~a" c)]))
   (define part1
@@ -78,10 +73,6 @@
   (printf "part 1 : ~a~n" part1)
   (printf "part 2 : ~a~n" num-steps)
   (void))
-
-(define (assert-dir dir qq)
-  (unless (memq dir qq)
-    (raise-user-error 'assert-dir "expected ~a got ~a" qq dir)))
 
 (define (-D pos dir)
   (case dir
