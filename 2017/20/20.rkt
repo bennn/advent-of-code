@@ -30,6 +30,15 @@
     (hash-set! H k (tick-particle v)))
   (void))
 
+(define (collide! H)
+  (define C (make-hash))
+  (for (((k v) (in-hash H)))
+    (hash-update! C (P-p v) (lambda (old) (cons k old)) '()))
+  (for* ((k* (in-hash-values C))
+         (k (in-list k*)))
+    (hash-remove! H k))
+  (void))
+
 (define (find-closest H)
   (for/fold ((dist #f) (part #f) #:result part)
             (((k v) (in-hash H)))
@@ -41,47 +50,73 @@
 (define (odist p)
   (apply + (P-p p)))
 
-(define (run-simulation H)
-  (define C (find-closest H))
+(define (run-simulation! H)
   (define TIME 100000)
-  (let loop ((best C) (timeout TIME))
+  (let loop ((timeout TIME))
     (if (zero? timeout)
-      best
+      (void)
       (let ()
         (tick! H)
-        (define C (find-closest H))
-        (if (= best C)
-          (loop best (- timeout 1))
-          (loop C TIME))))))
+        (if (collide! H)
+          (loop TIME)
+          (loop (- timeout 1)))))))
 
 (define (find-slowest H)
-  (for/fold ((acc #f) (best #f) #:result acc) (((k v) (in-hash H)))
-    (if (or (eq? acc #f) (speed< best v))
+  (define zero-acc
+    (for/list (((k v) (in-hash H)) #:when (zero-vector? (P-a v)))
+      (cons k v)))
+  (for/fold ((acc #f) (best #f) #:result acc)
+            ((kv (in-list zero-acc)))
+    (define-values [k v] (values (car kv) (cdr kv)))
+    (if (or (eq? #f acc) (vel< v best))
       (values k v)
       (values acc best))))
 
-(define (speed< p0 p1)
-  (define a0 (apply max (map abs (P-a p0))))
-  (define a1 (apply max (map abs (P-a p1))))
-  (define v0 (apply max (map abs (P-v p0))))
-  (define v1 (apply max (map abs (P-v p1))))
-  (or (< a0 a1) (and (= a0 a1) (< v0 v1)))
-  #;(or (or (< (car a0) (car a1))
-          (< (cadr a0) (cadr a1))
-          (< (caddr a0) (caddr a1)))
-      (and (equal? a0 a1)
-           (or (< (car v0) (car v1))
-               (< (cadr v0) (cadr v1))
-               (< (cadr v0) (cadr v1))))))
+(define (zero-vector? xxx)
+  (andmap zero? xxx))
+
+(define (acc< p0 p1)
+  (particle< P-a p0 p1))
+
+(define (vel< p0 p1)
+  (particle< P-v p0 p1))
+
+(define (particle< accessor p0 p1)
+  (define a0 (apply + (map abs (accessor p0))))
+  (define a1 (apply + (map abs (accessor p1))))
+  (< a0 a1))
+
+(define (get-untouched H)
+  (define hitmap
+    (particles->collides-when H))
+  (define pairs
+    (match-up hitmap))
+  (for/list ((k (in-hash-keys H))
+             #:when (unmatched? k pairs))
+    k))
+
+(define (particles->collides-when H)
+  TODO)
+
+(define (match-up hitmap)
+  TODO)
+
+(define (unmatched? k pairs)
+  (if (null? pairs)
+    #true
+    (and (not (memv k (car pairs))) (unmatched? k (cdr pairs)))))
 
 (define (go input)
-  (define H (parse-particles input))
   (define part1
-    #;(run-simulation H)
-    (find-slowest H)
-
-    )
+    (let ()
+      (define H (parse-particles input))
+      (find-slowest H)))
+  (define part2
+    (let ()
+      (define H (parse-particles input))
+      (length (get-untouched H))))
   (printf "part 1 : ~a~n" part1)
+  (printf "part 2 : ~a~n" part2)
   (void))
 
 (module+ main
