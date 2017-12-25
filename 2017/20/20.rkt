@@ -88,23 +88,96 @@
 
 (define (get-untouched H)
   (define hitmap
-    (particles->collides-when H))
-  (define pairs
+    (get-hitmap H))
+  (printf "HM ~a~n" hitmap)
+  (define xxx
     (match-up hitmap))
+  (printf "matched ~a~n" xxx)
   (for/list ((k (in-hash-keys H))
-             #:when (unmatched? k pairs))
+             #:when (unmatched? k xxx))
     k))
 
-(define (particles->collides-when H)
-  TODO)
+(define (get-hitmap H)
+  (let loop ((p* (hash->list H)) (HM (hash)))
+    (if (null? p*)
+      HM
+      (let ()
+        (define-values [k0 v0] (values (car (car p*)) (cdr (car p*))))
+        (define p-rest (cdr p*))
+        (define V (get-one-hitmap v0 p-rest))
+        (loop p-rest (hitmap-set* HM k0 V))))))
 
-(define (match-up hitmap)
-  TODO)
+(define (hitmap-set* HM k0 tp*)
+  (for/fold ((acc HM))
+            ((tp (in-list tp*)))
+    (define t (car tp))
+    (define k1 (cdr tp))
+    (define newp (make-pair k0 k1))
+    (hash-update HM t (lambda (old) (cons newp old)) '())))
 
-(define (unmatched? k pairs)
-  (if (null? pairs)
-    #true
-    (and (not (memv k (car pairs))) (unmatched? k (cdr pairs)))))
+(define (make-pair n0 n1)
+  (if (< n0 n1)
+    (cons n0 n1)
+    (cons n1 n0)))
+
+(define (get-one-hitmap p0 kv*)
+  (filter values
+    (for/list ((kv (in-list kv*)))
+      (define k (car kv))
+      (define v (cdr kv))
+      (define t (collides? p0 v))
+      (and t (cons t k)))))
+
+(define NUM (expt 2 16))
+
+(define (collides? p0 p1)
+  (define e0 (particle->equation p0))
+  (define e1 (particle->equation p1))
+  (let loop ([t 0] [prev #f])
+    #;(when (modulo t NUM)
+      (printf "... checking collides? ~a ~a~n" p0 p1))
+    (define pos0 (e0 t))
+    (define pos1 (e1 t))
+    (define dist (distance pos0 pos1))
+    (cond
+     [(= 0 dist)
+      t]
+     [(or (eq? prev #f) (>= prev dist))
+      (loop (+ t 1) dist)]
+     [else
+      #false])))
+
+(define (make-get-position vx ax)
+  (lambda (t)
+    (+ (* vx t) (* 1/2 ax (expt t 2)))))
+
+(define (particle->equation p)
+  (define init-pos (P-p p))
+  (define-values [get-x get-y get-z]
+    (apply values (map make-get-position (P-v p) (P-a p))))
+  (lambda (t)
+    (map + (list (get-x t) (get-y t) (get-z t)) init-pos)))
+
+(define (distance pos0 pos1)
+  (sqrt (apply + (map (lambda (x0 x1) (expt (- x1 x0) 2)) pos0 pos1))))
+
+(define (match-up HM)
+  (let loop ((t* (sort (hash-keys HM) <)) (HM HM))
+    (if (null? t*)
+      '()
+      (let ()
+        (define t (car t*))
+        (define v* (hash-ref HM t))
+        (append v* (loop (cdr t*) (hitmap-remove* HM t v*)))))))
+
+(define (hitmap-remove* HM t v*)
+  (for/fold ((acc HM))
+            (((k v) (in-hash HM))
+             #:when (< t k))
+    (hash-set HM k (remove* v* v))))
+
+(define (unmatched? k xxx)
+  (not (memv k xxx)))
 
 (define (go input)
   (define part1
