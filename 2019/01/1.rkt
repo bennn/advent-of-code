@@ -1,7 +1,7 @@
 #lang racket/base
 
-(define (fuel-req* fn [day2 #f])
-  (define gf (if day2 get-fuel* get-fuel))
+(define (fuel-req* fn [part2 #f])
+  (define gf (if part2 get-fuel* get-fuel))
   (with-input-from-file
     fn
     (lambda ()
@@ -17,16 +17,16 @@
     0
     (+ f (get-fuel* f))))
 
-(define (day1 fn)
-  (printf "day1 : ~a~n" (apply + (fuel-req* fn))))
+(define (part1 fn)
+  (printf "part1 : ~a~n" (apply + (fuel-req* fn))))
 
-(define (day2 fn)
-  (printf "day2 : ~a~n" (apply + (fuel-req* fn #true))))
+(define (part2 fn)
+  (printf "part2 : ~a~n" (apply + (fuel-req* fn #true))))
 
 (module+ main
          (require racket/cmdline)
          (command-line
            #:args (in)
-           (day1 in)
-           (day2 in)
+           (part1 in)
+           (part2 in)
            (void)))
