@@ -1,7 +1,41 @@
 #lang racket
 
+(define (integer->digit* i)
+  (let loop ([acc '()]
+             [prev 0]
+             [m 1])
+    (define m+ (* m 10))
+    (define n (quotient (- (modulo i m+) prev) m))
+    (define acc+ (cons n acc))
+    (if (< i m+)
+      acc+
+      (loop acc+ (+ prev n) m+))))
+
+(define (parse-range fn)
+  (let* ((str (file->string fn))
+         (str* (string-split (string-trim str) "-")))
+    (apply values (map string->number str*))))
+
+(define (num-digits n)
+  (+ 1 (order-of-magnitude n)))
+
+(define (eq-pair n)
+  (define str (number->string n))
+  (for/or ((i (in-range (- (string-length str) 1))))
+    (char=? (string-ref str i) (string-ref str (+ i 1)))))
+
+(define (non-decreasing? n)
+  (apply <= (integer->digit* n)))
+
 (define (part1 input)
-  (error 'not-implemented))
+  (define-values [lo hi] (parse-range input))
+  (define num-pwds
+    (for/sum ((n (in-range lo hi))
+              #:when (= 6 (num-digits n))
+              #:when (eq-pair n)
+              #:when (non-decreasing? n))
+      1))
+  (printf "part1 : ~a~n" num-pwds))
 
 (define (part2 input)
   (error 'not-implemented))
