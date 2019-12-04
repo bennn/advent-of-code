@@ -24,6 +24,27 @@
   (for/or ((i (in-range (- (string-length str) 1))))
     (char=? (string-ref str i) (string-ref str (+ i 1)))))
 
+(define (eq-pair-only n)
+  (define group*
+    (for/fold ((acc '()))
+              ((d (in-list (integer->digit* n))))
+      (cond
+        [(null? acc)
+         (cons (list d) acc)]
+        [(= d (caar acc))
+         (cons (cons d (car acc)) (cdr acc))]
+        [else
+         (cons (list d) acc)])))
+  (for/or ((g (in-list group*)))
+    (= 2 (length g))))
+
+(module+ test
+  (require rackunit)
+  (test-case "eq-pair-only"
+    (check-pred eq-pair-only 112233)
+    (check-false (eq-pair-only 123444))
+    (check-pred eq-pair-only 111122)))
+
 (define (non-decreasing? n)
   (apply <= (integer->digit* n)))
 
@@ -38,7 +59,15 @@
   (printf "part1 : ~a~n" num-pwds))
 
 (define (part2 input)
-  (error 'not-implemented))
+  (define-values [lo hi] (parse-range input))
+  (define num-pwds
+    (for/sum ((n (in-range lo hi))
+              #:when (= 6 (num-digits n))
+              #:when (eq-pair-only n)
+              #:when (non-decreasing? n))
+      1))
+  (printf "part2 : ~a~n" num-pwds))
+
 
 (module+ main
   (require racket/cmdline)
