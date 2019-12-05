@@ -23,6 +23,6 @@
             (printf "  (command-line~n")
             (printf "    #:program \"day-~a\"~n" NUM)
             (printf "    #:args (INPUT)~n")
-            (printf "    (part1 INPUT)~n")
-            (printf "    (part2 INPUT)~n")
+            (printf "    (printf \"part1: ~~a~~n\" (part1 INPUT))~n")
+            (printf "    (printf \"part2: ~~a~~n\" (part2 INPUT))~n")
             (printf "    (void)))~n" )))))))
