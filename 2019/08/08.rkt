@@ -38,8 +38,29 @@
       (values l num-zeros)
       (values acc zeros))))
 
+(define (print-layer w h ly)
+  (let loop ((row 0))
+    (if (= row h)
+      (void)
+      (begin
+        (for ((col (in-range w)))
+          (define v (vector-ref ly (+ col (* w row))))
+          (display (if (= v 0) " " v)))
+        (newline)
+        (loop (+ row 1))))))
+
 (define (part2 input)
-  (error 'not-implemented))
+  (define layer* (file->layer* w h input))
+  (define wh (* w h))
+  (define decoded (make-vector wh 2))
+  (for ((lyr (in-list layer*)))
+    (for ((bit (in-vector lyr))
+          (i (in-naturals)))
+      (define old-val (vector-ref decoded i))
+      (unless (< old-val 2)
+        (vector-set! decoded i bit))))
+  (print-layer w h decoded)
+  "see above")
 
 (module+ main
   (require racket/cmdline)
